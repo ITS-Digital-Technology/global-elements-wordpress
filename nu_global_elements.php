@@ -3,7 +3,7 @@
 Plugin Name: NU Global Elements
 Description: Inserts the Northeastern University global header and footer. Requires wp_body_open() under the body tag.
 Author: Northeastern University
-Version: 1.0
+Version: 1.1.0
 */ 
 
 /** 
@@ -12,9 +12,9 @@ Version: 1.0
 add_action('wp_head', function() {
 
     echo '
-        <link rel="stylesheet" href="https://unpkg.com/@northeastern-web/global-elements@latest/dist/css/index.css">
-        <script src="https://unpkg.com/@northeastern-web/kernl-ui@latest/dist/js/index.umd.js"></script>
-        <script src="https://unpkg.com/@northeastern-web/global-elements@latest/dist/js/index.umd.js" defer></script>
+        <link rel="stylesheet" href="https://global-packages.cdn.northeastern.edu/global-elements/dist/css/index.css">
+        <script src="https://global-packages.cdn.northeastern.edu/global-elements/dist/js/index.umd.js"></script>
+        <script src="https://global-packages.cdn.northeastern.edu/kernl-ui/dist/js/index.umd.js" defer></script>
         ';
 
 });
