@@ -1,8 +1,10 @@
 <?php
 /* 
-Plugin Name: NU Global Elements
+Plugin Name: Northeastern Global Elements
+Plugin URI: https://northeastern.netlify.app/pattern-library/page-chrome/global-elements/
 Description: Inserts the Northeastern University global header and footer. Requires wp_body_open() under the body tag.
-Author: Northeastern University
+Author: Northeastern University ITS Web Solutions
+Author URI: https://its.northeastern.edu
 Version: 1.1.0
 */ 
 
