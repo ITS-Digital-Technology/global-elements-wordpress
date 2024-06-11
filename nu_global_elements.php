@@ -68,8 +68,8 @@ if (!isset($nu_global_elements_options['disable_global_footer'])){
     add_action('wp_head', function() {
 
         echo '
-            <script src="https://consent.trustarc.com/autoblockasset/core.min.js?domain=northeastern-test.edu"></script>
-            <script src="https://consent.trustarc.com/autoblockoptout?domain=northeastern-test.edu"></script>
+            <script src="https://consent.trustarc.com/autoblockasset/core.min.js?domain=northeastern.edu"></script>
+            <script src="https://consent.trustarc.com/autoblockoptout?domain=northeastern.edu"></script>
             ';
     });
 
@@ -78,7 +78,7 @@ if (!isset($nu_global_elements_options['disable_global_footer'])){
         echo '
             <div id="consent_blackbar"></div>
             <div id="teconsent"></div>
-            <script async="async" src="https://consent.trustarc.com/notice?domain=northeastern-test.edu&c=teconsent&js=nj&noticeType=bb&text=true&gtm=1"></script>
+            <script async="async" src="https://consent.trustarc.com/notice?domain=northeastern.edu&c=teconsent&js=nj&noticeType=bb&text=true&gtm=1"></script>
             ';
     });
 }
