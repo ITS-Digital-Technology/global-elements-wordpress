@@ -1,11 +1,11 @@
 <?php
 /* 
 Plugin Name: Northeastern Global Elements
-Plugin URI: https://northeastern.netlify.app/pattern-library/page-chrome/global-elements/
+Plugin URI: https://github.com/ITS-Digital-Technology/global-elements-wordpress
 Description: Inserts the Northeastern University global header, footer, and TrustArc cookie consent manager. Requires wp_body_open() under the body tag to display the global header.
 Author: Northeastern University ITS Web Solutions
 Author URI: https://its.northeastern.edu
-Version: 1.2.1
+Version: 1.2.2
 */ 
 
 /** 
@@ -17,11 +17,13 @@ $nu_global_elements_options = get_option( 'nu_global_elements_option_name' );
 /** 
  * Include global elements CSS, kernl UI and javascript from CDN
  */
-echo '
+add_action('wp_head', function() {
+	echo '
             <link rel="stylesheet" href="https://global-packages.cdn.northeastern.edu/global-elements/dist/css/index.css">
             <script src="https://global-packages.cdn.northeastern.edu/global-elements/dist/js/index.umd.js"></script>
             <script src="https://global-packages.cdn.northeastern.edu/kernl-ui/dist/js/index.umd.js" defer></script>
             ';
+});
 
 /** 
  * Include the global NU header, if it is not disabled in the options
@@ -57,21 +59,17 @@ if (!isset($nu_global_elements_options['disable_global_footer'])){
 /** 
  * Include TrustArc, if it is not disabled in the options
  */
-
  if (!isset($nu_global_elements_options['disable_trustarc'])){
-	if (!isset($nu_global_elements_options['disable_global_footer'])){
-    	add_action('wp_footer', function() {
-        	echo '<div x-data="NUGlobalElements.trustarc()" x-init="init()"></div>';
-   		});
-	}
-	else {
-		add_action('wp_footer', function() {
-			echo '<style>#trustarc-no-ge-footer footer {padding-top: .7rem !important; text-align: center !important;}</style>';
-        	echo '<div id="trustarc-no-ge-footer" x-data="NUGlobalElements.trustarc()" x-init="init()"></div>';
-   		});
-	}
-}
 
+	if (isset($nu_global_elements_options['disable_global_footer'])){
+		add_action('wp_footer', function() {
+			echo '<style>#trustarc-global-element footer {padding-top: .6rem !important;} #trustarc-global-element footer a {color: #ccc; text-decoration: none;}</style>';
+		});
+	}
+	add_action('wp_footer', function() {
+		echo '<div id="trustarc-global-element" x-data="NUGlobalElements.trustarc()" x-init="init()"></div>';
+   	});
+}
 
 /**
  * Create plugin settings/options menu item, page and fields
