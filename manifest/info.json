@@ -1,0 +1,21 @@
+{
+	"name" : "Northeastern Global Elements",
+	"slug" : "global-elements-wordpress",
+	"author" : "<a href='https://github.com/ITS-Digital-Technology'>ITS Digital Technology & Services</a>",
+	"author_profile" : "https://its.northeastern.edu/",
+	"version" : "1.2.2",
+	"download_url" : "https://github.com/ITS-Digital-Technology/global-elements-wordpress/archive/refs/heads/main.zip",
+	"requires" : "5.6",
+	"tested" : "6.6",
+	"requires_php" : "5.6",
+	"last_updated" : "2024-08-12 12:00:00",
+	"sections" : {
+		"description" : "Simple Wordpress Plugin developed by the Northeastern University ITS Web Solutions team. Loads the latest version of kernl(ui) Global Elements to your website, plus the code for the TrustArc cookie consent manager.",
+		"installation" : "Click the activate button and that's it.",
+		"changelog" : ""
+	},
+	"banners" : {
+		"low" : "",
+		"high" : ""
+	}
+}
