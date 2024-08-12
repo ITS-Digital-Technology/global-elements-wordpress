@@ -8,11 +8,11 @@
 	"requires" : "5.6",
 	"tested" : "6.6.1",
 	"requires_php" : "5.6",
-	"last_updated" : "2024-08-12 12:00:00",
+	"last_updated" : "2024-08-12 16:00:00",
 	"sections" : {
-		"description" : "Simple Wordpress Plugin developed by the Northeastern University ITS Web Solutions team that inserts the Northeastern University global header, footer, and TrustArc cookie consent manager. Each elemenent can be enabled/disabled from the plugin's settings.",
+		"description" : "A Wordpress plugin developed by the Northeastern University ITS Web Solutions team that inserts the Northeastern University global header, footer, and TrustArc cookie consent manager. Each elemenent can be enabled/disabled from the plugin's settings.",
 		"installation" : "Click the activate button to install. Requires wp_body_open() under the body tag in your theme to display the global header.",
-		"changelog" : ""
+		"changelog" : "Fixed 'unexpected output' bug and tweaked TrustArc link formatting."
 	},
 	"banners" : {
 		"low" : "",
