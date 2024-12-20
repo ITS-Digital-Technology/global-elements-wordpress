@@ -1,0 +1,43 @@
+table.form-table {
+    max-width: 45rem;
+}
+
+.form-table th {
+    width: 80%;
+}
+
+.form-table th {
+    padding-top: 1rem;
+}
+
+.form-table td {
+    padding-bottom: 2rem;
+}
+
+@media screen and (min-width: 783px) {
+    .form-table td {
+        vertical-align: top;
+        text-align:center;
+    }
+
+    .form-table th,
+    .form-table td {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+}
+
+.form-table tr:not(:last-child),
+.form-table tr:not(:last-child) {
+    border-bottom: 1px solid rgba(0,0,0,0.3)
+}
+
+.nuge-img-max-width {
+    max-width :300px;
+}
+
+.nuge-skip-link-selector {
+    max-width: 200px;
+}
+
+.sr-only { display: none; }
