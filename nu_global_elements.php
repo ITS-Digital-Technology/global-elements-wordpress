@@ -13,20 +13,24 @@ if (!defined('ABSPATH')) { exit; }
 const NU_GLOBAL_ELEMENTS_PLUGIN_VER = "1.4.0";
 const NU_GLOBAL_ELEMENTS_PLUGIN_MANIFEST_URL = "https://its-digital-technology.github.io/global-elements-wordpress/manifest/info.json";
 
+
 /** 
  * Get options values for plugin
  */
 
 $nu_global_elements_options = get_option( 'nu_global_elements_option_name' );
 
+
 /** 
  * Include global elements CSS, kernl UI and javascript from CDN on front end
  */
+
 add_action('wp_head', function() { ?>
 	<link rel="stylesheet" href="https://global-packages.cdn.northeastern.edu/global-elements/dist/css/index.css">
     <script src="https://global-packages.cdn.northeastern.edu/global-elements/dist/js/index.umd.js"></script>
     <script src="https://global-packages.cdn.northeastern.edu/kernl-ui/dist/js/index.umd.js" defer></script>
 <?php });
+
 
 /** 
  * Include the global NU header, if it is not disabled in the options
@@ -34,29 +38,7 @@ add_action('wp_head', function() { ?>
  * NOTE: There must be a wp_body_open() statement under the <body> tag, 
  * most likely in header.php of the theme. 
  */
-/*
- if (!isset($nu_global_elements_options['disable_global_header'])) {
 
-    add_action('wp_body_open', function() use ($nu_global_elements_options) {
-        
-        // Determine whether to show the wordmark
-        $show_wordmark = isset($nu_global_elements_options['show_nu_wordmark']) && $nu_global_elements_options['show_nu_wordmark'];
-
-        // Create the x-data attribute dynamically
-        $x_data = sprintf(
-            'x-data="NUGlobalElements.header({ wordmark: %s })"',
-            $show_wordmark ? 'true' : 'false'
-        );
-
-        // Output the HTML structure
-        echo sprintf(
-            '<div %s x-init="init()" style="height: 48px; background-color: black"></div>',
-            $x_data
-        );
-
-    }, 10);
-}
-*/
 if (!isset($nu_global_elements_options['disable_global_header'])) {
 
     add_action('wp_body_open', function() use ($nu_global_elements_options) {
@@ -88,19 +70,21 @@ if (!isset($nu_global_elements_options['disable_global_header'])) {
 }
 
 
-
 /** 
  * Include the global NU footer, if it is not disabled in the options
  */
+
 if (!isset($nu_global_elements_options['disable_global_footer'])) {
     add_action('wp_footer', function() {
         echo '<div x-data="NUGlobalElements.footer()" x-init="init()"></div>';
     });
 }
 
+
 /** 
  * Include TrustArc, if it is not disabled in the options
  */
+
 if (!isset($nu_global_elements_options['disable_trustarc'])){
 
 	if (isset($nu_global_elements_options['disable_global_footer'])){
@@ -127,6 +111,7 @@ function nu_global_elements_admin($hook) {
 
     wp_enqueue_style('nu-global-elements-admin', plugins_url('nu-global-elements-admin.css', __FILE__ ));
 }
+
 
 /**
  * Create plugin settings/options menu item, page and fields
@@ -354,7 +339,6 @@ function nu_global_elements_link( $links ) {
 /** 
  * Check for updates to this plugin and if available allow updating through WP admin plugin manager
  */
-
 
 if( ! class_exists( 'UpdateChecker' ) ) {
 
