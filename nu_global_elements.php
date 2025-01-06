@@ -10,8 +10,9 @@ Version: 1.3.0
 
 if (!defined('ABSPATH')) { exit; }
 
-const NU_GLOBAL_ELEMENTS_PLUGIN_VER = "1.3.0";
+const NU_GLOBAL_ELEMENTS_PLUGIN_VER = "1.4.0";
 const NU_GLOBAL_ELEMENTS_PLUGIN_MANIFEST_URL = "https://its-digital-technology.github.io/global-elements-wordpress/manifest/info.json";
+
 
 /** 
  * Get options values for plugin
@@ -19,16 +20,17 @@ const NU_GLOBAL_ELEMENTS_PLUGIN_MANIFEST_URL = "https://its-digital-technology.g
 
 $nu_global_elements_options = get_option( 'nu_global_elements_option_name' );
 
+
 /** 
- * Include global elements CSS, kernl UI and javascript from CDN
+ * Include global elements CSS, kernl UI and javascript from CDN on front end
  */
-add_action('wp_head', function() {
-	echo '
-            <link rel="stylesheet" href="https://global-packages.cdn.northeastern.edu/global-elements/dist/css/index.css">
-            <script src="https://global-packages.cdn.northeastern.edu/global-elements/dist/js/index.umd.js"></script>
-            <script src="https://global-packages.cdn.northeastern.edu/kernl-ui/dist/js/index.umd.js" defer></script>
-            ';
-});
+
+add_action('wp_head', function() { ?>
+	<link rel="stylesheet" href="https://global-packages.cdn.northeastern.edu/global-elements/dist/css/index.css">
+    <script src="https://global-packages.cdn.northeastern.edu/global-elements/dist/js/index.umd.js"></script>
+    <script src="https://global-packages.cdn.northeastern.edu/kernl-ui/dist/js/index.umd.js" defer></script>
+<?php });
+
 
 /** 
  * Include the global NU header, if it is not disabled in the options
@@ -36,45 +38,80 @@ add_action('wp_head', function() {
  * NOTE: There must be a wp_body_open() statement under the <body> tag, 
  * most likely in header.php of the theme. 
  */
-if (!isset($nu_global_elements_options['disable_global_header'])){
-        add_action('wp_body_open', function() {
 
-        echo '<div
-                x-data="NUGlobalElements.header({
-                    wordmark: true
-                })"
-                x-init="init()"
-                style="height: 48px; background-color: black"
-            ></div>';
+if (!isset($nu_global_elements_options['disable_global_header'])) {
+
+    add_action('wp_body_open', function() use ($nu_global_elements_options) {
+
+        // Determine whether to show the wordmark
+        $show_wordmark = isset($nu_global_elements_options['show_nu_wordmark']) && $nu_global_elements_options['show_nu_wordmark'];
+
+        // Determine whether to show the menu
+        $disable_menu = isset($nu_global_elements_options['disable_menu']) && $nu_global_elements_options['disable_menu'];
+
+        // Get the skipToMainSelector value, defaulting to "#main"
+        $skip_link_selector = isset($nu_global_elements_options['skip_link_selector']) ? $nu_global_elements_options['skip_link_selector'] : '#main';
+
+        // Create the x-data attribute dynamically with additional options
+        $x_data = sprintf(
+            'x-data="NUGlobalElements.header({ wordmark: %s, menu: %s, skipToMainSelector: \'%s\' })"',
+            $show_wordmark ? 'true' : 'false',
+            $disable_menu ? 'false' : 'true',
+            esc_js($skip_link_selector) // Escape for safe JavaScript insertion
+        );
+
+        // Output the HTML structure
+        echo sprintf(
+            '<div %s x-init="init()" style="height: 48px; background-color: black"></div>',
+            $x_data
+        );
 
     }, 10);
 }
 
+
 /** 
  * Include the global NU footer, if it is not disabled in the options
  */
-if (!isset($nu_global_elements_options['disable_global_footer'])){
+
+if (!isset($nu_global_elements_options['disable_global_footer'])) {
     add_action('wp_footer', function() {
-
         echo '<div x-data="NUGlobalElements.footer()" x-init="init()"></div>';
-
     });
 }
+
 
 /** 
  * Include TrustArc, if it is not disabled in the options
  */
- if (!isset($nu_global_elements_options['disable_trustarc'])){
+
+if (!isset($nu_global_elements_options['disable_trustarc'])){
 
 	if (isset($nu_global_elements_options['disable_global_footer'])){
-		add_action('wp_footer', function() {
-			echo '<style>#trustarc-global-element footer {padding-top: .6rem !important;} #trustarc-global-element footer a {color: #ccc; text-decoration: none;}</style>';
+		add_action('wp_head', function() {
+			echo '<style>
+				#trustarc-global-element footer {padding-top: .6rem !important;}
+				#trustarc-global-element footer a {color: #ccc; text-decoration: none;}
+			</style>';
 		});
 	}
+
 	add_action('wp_footer', function() {
 		echo '<div id="trustarc-global-element" x-data="NUGlobalElements.trustarc()" x-init="init()"></div>';
    	});
 }
+
+// custom plugin styles
+add_action('admin_enqueue_scripts', 'nu_global_elements_admin');
+
+function nu_global_elements_admin($hook) {
+    if ( 'admin.php?page=nu-global-elements' == $hook ) {
+        return;
+    }
+
+    wp_enqueue_style('nu-global-elements-admin', plugins_url('nu-global-elements-admin.css', __FILE__ ));
+}
+
 
 /**
  * Create plugin settings/options menu item, page and fields
@@ -86,7 +123,7 @@ if (!isset($nu_global_elements_options['disable_global_footer'])){
  * $disable_trustarc = $nu_global_elements_options['disable_trustarc']; // Disable TrustArc
  */
 
- class NUGlobalElements {
+class NUGlobalElements {
 	private $nu_global_elements_options;
 
 	public function __construct() {
@@ -147,6 +184,35 @@ if (!isset($nu_global_elements_options['disable_global_footer'])){
 		);
 
 		add_settings_field(
+			'show_nu_wordmark', // id
+			'Show "Northeastern University" Wordmark next to large "N"
+			<p style="font-weight: normal">(uncheck if "Northeastern University" already exists in your website department logo)</p>
+			<img class="nuge-img-max-width" src="' . plugin_dir_url( __FILE__ ) . 'images/duplicate-wordmark-example.png" alt=""><br>
+			<p><i style="font-weight: normal">Avoid duplicate wordmarks in the global and local headers.</i></p>', // title
+			array( $this, 'show_nu_wordmark_callback' ), // callback
+			'nu-global-elements-admin', // page
+			'nu_global_elements_setting_section' // section
+		);
+
+		add_settings_field(
+			'skip_link_selector', // id
+			'Skip link selector
+			<p style="font-weight: normal">Enter the ID selector for the "Skip to main content" destination. Include the <code>#</code> (<i>e.g.</i> <code>#main</code>)</p>
+			<p style="font-weight: normal">Be sure to remove existing skip-to-main elements from your theme.</p>', // title
+			array( $this, 'skip_link_selector_callback' ), // callback
+			'nu-global-elements-admin', // page
+			'nu_global_elements_setting_section' // section
+		);
+
+		add_settings_field(
+			'disable_menu', // id
+			'Hide the "Explore Northeastern" menu', // title
+			array( $this, 'disable_menu_callback' ), // callback
+			'nu-global-elements-admin', // page
+			'nu_global_elements_setting_section' // section
+		);
+
+		add_settings_field(
 			'disable_global_footer', // id
 			'Disable Global Footer', // title
 			array( $this, 'disable_global_footer_callback' ), // callback
@@ -177,6 +243,18 @@ if (!isset($nu_global_elements_options['disable_global_footer'])){
 			$sanitary_values['disable_trustarc'] = $input['disable_trustarc'];
 		}
 
+		if ( isset( $input['show_nu_wordmark'] ) ) {
+			$sanitary_values['show_nu_wordmark'] = $input['show_nu_wordmark'];
+		}
+
+		if ( isset( $input['skip_link_selector'] ) ) {
+			$sanitary_values['skip_link_selector'] = $input['skip_link_selector'];
+		}
+
+		if ( isset( $input['disable_menu'] ) ) {
+			$sanitary_values['disable_menu'] = $input['disable_menu'];
+		}
+
 		return $sanitary_values;
 	}
 
@@ -188,6 +266,34 @@ if (!isset($nu_global_elements_options['disable_global_footer'])){
 		printf(
 			'<input type="checkbox" name="nu_global_elements_option_name[disable_global_header]" id="disable_global_header" value="disable_global_header" %s>',
 			( isset( $this->nu_global_elements_options['disable_global_header'] ) && $this->nu_global_elements_options['disable_global_header'] === 'disable_global_header' ) ? 'checked' : ''
+		);
+	}
+
+	public function show_nu_wordmark_callback() {
+		printf(
+			'<input type="checkbox" name="nu_global_elements_option_name[show_nu_wordmark]" id="show_nu_wordmark" value="show_nu_wordmark" %s>',
+			( isset( $this->nu_global_elements_options['show_nu_wordmark'] ) && $this->nu_global_elements_options['show_nu_wordmark'] === 'show_nu_wordmark' ) ? 'checked' : ''
+		);
+	}
+
+	public function skip_link_selector_callback() {
+		// Get the existing value of the skip link selector from the options
+		$skip_link_selector = isset($this->nu_global_elements_options['skip_link_selector']) ? $this->nu_global_elements_options['skip_link_selector'] : '#main';
+
+		// Output the text input field with the existing value
+		printf(
+			'<input type="text" name="nu_global_elements_option_name[skip_link_selector]" id="skip_link_selector" value="%s" class="nuge-skip-link-selector" />',
+			esc_attr($skip_link_selector) // Ensure the value is properly escaped
+		);
+
+		// Provide a description about what the input is for
+		echo '<p class="sr-only">Enter the ID selector for the "Skip to main content" destination (e.g., <code>#main</code>).</p>';
+	}
+
+	public function disable_menu_callback() {
+		printf(
+			'<input type="checkbox" name="nu_global_elements_option_name[disable_menu]" id="disable_menu" value="disable_menu" %s>',
+			( isset( $this->nu_global_elements_options['disable_menu'] ) && $this->nu_global_elements_options['disable_menu'] === 'disable_menu' ) ? 'checked' : ''
 		);
 	}
 
@@ -204,23 +310,25 @@ if (!isset($nu_global_elements_options['disable_global_footer'])){
 			( isset( $this->nu_global_elements_options['disable_trustarc'] ) && $this->nu_global_elements_options['disable_trustarc'] === 'disable_trustarc' ) ? 'checked' : ''
 		);
 	}
-
 }
+
 if ( is_admin() )
 	$nu_global_elements = new NUGlobalElements();
 
-
 add_filter( 'plugin_action_links_global-elements-wordpress/nu_global_elements.php', 'nu_global_elements_link' );
 function nu_global_elements_link( $links ) {
-    // Build and escape the URL.
+
+	// Build and escape the URL.
     $url = esc_url( add_query_arg(
         'page',
         'nu-global-elements',
         get_admin_url() . 'admin.php'
     ) );
-    // Create the link.
+
+	// Create the link.
     $settings_link = "<a href='$url'>" . __( 'Settings' ) . '</a>';
-    // Adds the link to the end of the array.
+
+	// Adds the link to the end of the array.
     array_push(
         $links,
         $settings_link
@@ -231,7 +339,6 @@ function nu_global_elements_link( $links ) {
 /** 
  * Check for updates to this plugin and if available allow updating through WP admin plugin manager
  */
-
 
 if( ! class_exists( 'UpdateChecker' ) ) {
 
@@ -381,7 +488,6 @@ if( ! class_exists( 'UpdateChecker' ) ) {
 			}
 
 		}
-
 
 	}
 
