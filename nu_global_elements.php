@@ -10,7 +10,7 @@ Version: 1.4.0
 
 if (!defined('ABSPATH')) { exit; }
 
-const NU_GLOBAL_ELEMENTS_PLUGIN_VER = "1.4.0";
+const NU_GLOBAL_ELEMENTS_PLUGIN_VER = "1.4.1";
 const NU_GLOBAL_ELEMENTS_PLUGIN_MANIFEST_URL = "https://its-digital-technology.github.io/global-elements-wordpress/manifest/info.json";
 
 
