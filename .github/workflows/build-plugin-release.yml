@@ -26,6 +26,18 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verify tag commit is on main
+        shell: bash
+        run: |
+          set -e
+
+          git fetch origin main
+
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" "origin/main"; then
+            echo "Tag $GITHUB_REF_NAME is not on a commit reachable from origin/main"
+            exit 1
+          fi
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -45,7 +57,22 @@ jobs:
 
           get_header_value() {
             local header="$1"
-            grep -i "^${header}:" "$PLUGIN_FILE" | head -n 1 | sed "s/^${header}:[[:space:]]*//I"
+            awk -v IGNORECASE=1 -v key="$header" '
+              {
+                pos = index($0, ":");
+                if (pos > 0) {
+                  field = substr($0, 1, pos - 1);
+                  value = substr($0, pos + 1);
+                  gsub(/^[[:space:]]+|[[:space:]]+$/, "", field);
+                  gsub(/^[[:space:]]+|[[:space:]]+$/, "", value);
+
+                  if (tolower(field) == tolower(key)) {
+                    print value;
+                    exit;
+                  }
+                }
+              }
+            ' "$PLUGIN_FILE"
           }
 
           PLUGIN_NAME=$(get_header_value "Plugin Name")
@@ -214,5 +241,8 @@ jobs:
             echo "No changes to publish to $PAGES_BRANCH"
           else
             git commit -m "Publish manifest for $TAG_NAME"
+
+            # Force-push is intentional here because gh-pages is treated as a
+            # generated output branch, not a manually maintained source branch.
             git push origin "$PAGES_BRANCH" --force
           fi
