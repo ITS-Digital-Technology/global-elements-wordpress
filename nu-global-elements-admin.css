@@ -4,9 +4,6 @@
 
 .toplevel_page_nu-global-elements .form-table th {
     width: 80%;
-}
-
-.toplevel_page_nu-global-elements .form-table th {
     padding-top: 1rem;
 }
 
@@ -17,7 +14,7 @@
 @media screen and (min-width: 783px) {
     .toplevel_page_nu-global-elements .form-table td {
         vertical-align: top;
-        text-align:center;
+        text-align: center;
     }
 
     .toplevel_page_nu-global-elements .form-table th,
@@ -27,17 +24,18 @@
     }
 }
 
-.toplevel_page_nu-global-elements .form-table tr:not(:last-child),
 .toplevel_page_nu-global-elements .form-table tr:not(:last-child) {
-    border-bottom: 1px solid rgba(0,0,0,0.3)
+    border-bottom: 1px solid rgba(0, 0, 0, 0.3);
 }
 
 .nuge-img-max-width {
-    max-width :300px;
+    max-width: 300px;
 }
 
 .nuge-skip-link-selector {
     max-width: 200px;
 }
 
-.toplevel_page_nu-global-elements .sr-only { display: none; }
+.toplevel_page_nu-global-elements .sr-only {
+    display: none;
+}

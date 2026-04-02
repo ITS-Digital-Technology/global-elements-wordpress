@@ -1,0 +1,218 @@
+name: Build Plugin Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    env:
+      PLUGIN_FILE: nu_global_elements.php
+      PLUGIN_DIR: global-elements-wordpress
+      ZIP_NAME: global-elements-wordpress.zip
+      MANIFEST_TEMPLATE: manifest/info.template.json
+      MANIFEST_OUTPUT: manifest/info.json
+      PAGES_BRANCH: gh-pages
+
+    steps:
+      - name: Check out tagged code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Set release variables
+        shell: bash
+        run: |
+          echo "TAG_NAME=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          echo "RELEASE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+          echo "LAST_UPDATED=$(date -u '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_ENV"
+
+      - name: Read plugin header metadata
+        shell: bash
+        run: |
+          set -e
+
+          get_header_value() {
+            local header="$1"
+            grep -i "^${header}:" "$PLUGIN_FILE" | head -n 1 | sed "s/^${header}:[[:space:]]*//I"
+          }
+
+          PLUGIN_NAME=$(get_header_value "Plugin Name")
+          PLUGIN_AUTHOR=$(get_header_value "Author")
+          PLUGIN_AUTHOR_URI=$(get_header_value "Author URI")
+          PLUGIN_VERSION=$(get_header_value "Version")
+          PLUGIN_REQUIRES_AT_LEAST=$(get_header_value "Requires at least")
+          PLUGIN_REQUIRES_PHP=$(get_header_value "Requires PHP")
+
+          echo "PLUGIN_NAME=$PLUGIN_NAME" >> "$GITHUB_ENV"
+          echo "PLUGIN_AUTHOR=$PLUGIN_AUTHOR" >> "$GITHUB_ENV"
+          echo "PLUGIN_AUTHOR_URI=$PLUGIN_AUTHOR_URI" >> "$GITHUB_ENV"
+          echo "PLUGIN_VERSION=$PLUGIN_VERSION" >> "$GITHUB_ENV"
+          echo "PLUGIN_REQUIRES_AT_LEAST=$PLUGIN_REQUIRES_AT_LEAST" >> "$GITHUB_ENV"
+          echo "PLUGIN_REQUIRES_PHP=$PLUGIN_REQUIRES_PHP" >> "$GITHUB_ENV"
+
+      - name: Verify plugin header version matches tag
+        shell: bash
+        run: |
+          echo "Tag version:    $RELEASE_VERSION"
+          echo "Plugin version: $PLUGIN_VERSION"
+
+          if [ -z "$PLUGIN_VERSION" ]; then
+            echo "Could not find Version header in $PLUGIN_FILE"
+            exit 1
+          fi
+
+          if [ "$RELEASE_VERSION" != "$PLUGIN_VERSION" ]; then
+            echo "Tag version does not match plugin header version."
+            exit 1
+          fi
+
+      - name: Verify required plugin header fields exist
+        shell: bash
+        run: |
+          set -e
+
+          required_vars=(
+            PLUGIN_NAME
+            PLUGIN_AUTHOR
+            PLUGIN_AUTHOR_URI
+            PLUGIN_REQUIRES_AT_LEAST
+            PLUGIN_REQUIRES_PHP
+          )
+
+          for var_name in "${required_vars[@]}"; do
+            value="${!var_name}"
+            if [ -z "$value" ]; then
+              echo "Missing required plugin header value: $var_name"
+              exit 1
+            fi
+          done
+
+      - name: Build plugin zip with stable top-level folder
+        shell: bash
+        run: |
+          set -e
+
+          rm -rf build "$ZIP_NAME"
+          mkdir -p "build/$PLUGIN_DIR"
+
+          # Build a proper WordPress plugin package with a stable folder name.
+          rsync -av ./ "build/$PLUGIN_DIR/" \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitignore' \
+            --exclude='.nojekyll' \
+            --exclude='.DS_Store' \
+            --exclude='build' \
+            --exclude='manifest' \
+            --exclude='*.zip'
+
+          cd build
+          zip -r "../$ZIP_NAME" "$PLUGIN_DIR"
+
+      - name: Create GitHub release if needed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if ! gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release create "$TAG_NAME" \
+              --title "$TAG_NAME" \
+              --generate-notes
+          fi
+
+      - name: Upload plugin zip to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release upload "$TAG_NAME" "$ZIP_NAME" --clobber
+
+      - name: Generate manifest from template and plugin header
+        shell: bash
+        run: |
+          set -e
+
+          python3 - <<'PY'
+          import json
+          import os
+
+          template_path = os.environ["MANIFEST_TEMPLATE"]
+          output_path = os.environ["MANIFEST_OUTPUT"]
+
+          with open(template_path, "r", encoding="utf-8") as f:
+              template = f.read()
+
+          template = template.replace("__VERSION__", os.environ["RELEASE_VERSION"])
+          template = template.replace("__LAST_UPDATED__", os.environ["LAST_UPDATED"])
+
+          data = json.loads(template)
+
+          # Inject canonical plugin metadata from the plugin header.
+          data["name"] = os.environ["PLUGIN_NAME"]
+          data["version"] = os.environ["PLUGIN_VERSION"]
+          data["author"] = f"<a href='{os.environ['PLUGIN_AUTHOR_URI']}'>{os.environ['PLUGIN_AUTHOR']}</a>"
+          data["author_profile"] = os.environ["PLUGIN_AUTHOR_URI"]
+          data["requires"] = os.environ["PLUGIN_REQUIRES_AT_LEAST"]
+          data["requires_php"] = os.environ["PLUGIN_REQUIRES_PHP"]
+
+          with open(output_path, "w", encoding="utf-8") as f:
+              json.dump(data, f, indent=2)
+              f.write("\n")
+          PY
+
+          echo "Generated manifest:"
+          cat "$MANIFEST_OUTPUT"
+
+      - name: Publish manifest to gh-pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -e
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          rm -rf pages-out
+          mkdir -p pages-out/manifest
+          touch pages-out/.nojekyll
+          cp "$MANIFEST_OUTPUT" pages-out/manifest/info.json
+
+          git fetch origin
+
+          if git ls-remote --exit-code --heads origin "$PAGES_BRANCH" >/dev/null 2>&1; then
+            echo "Updating existing $PAGES_BRANCH branch"
+            git switch --force-create "$PAGES_BRANCH" "origin/$PAGES_BRANCH"
+          else
+            echo "Creating orphan $PAGES_BRANCH branch"
+            git switch --orphan "$PAGES_BRANCH"
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name '.git' \
+            ! -name 'pages-out' \
+            -exec rm -rf {} +
+
+          cp -R pages-out/. .
+
+          git add .nojekyll manifest/info.json
+
+          if git diff --cached --quiet; then
+            echo "No changes to publish to $PAGES_BRANCH"
+          else
+            git commit -m "Publish manifest for $TAG_NAME"
+            git push origin "$PAGES_BRANCH" --force
+          fi

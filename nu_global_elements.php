@@ -1,17 +1,43 @@
 <?php
-/* 
+/*
 Plugin Name: Northeastern Global Elements
 Plugin URI: https://github.com/ITS-Digital-Technology/global-elements-wordpress
 Description: Inserts the Northeastern University global header, footer, and TrustArc cookie consent manager. Requires wp_body_open() under the body tag to display the global header.
+Version: 1.4.1
+Requires at least: 6.0
+Requires PHP: 7.4
 Author: Northeastern University ITS Web Solutions
 Author URI: https://its.northeastern.edu
-Version: 1.4.1
-*/ 
+Update URI: https://github.com/ITS-Digital-Technology/global-elements-wordpress
+*/
 
 if (!defined('ABSPATH')) { exit; }
 
-const NU_GLOBAL_ELEMENTS_PLUGIN_VER = "1.4.1";
 const NU_GLOBAL_ELEMENTS_PLUGIN_MANIFEST_URL = "https://its-digital-technology.github.io/global-elements-wordpress/manifest/info.json";
+
+function nu_global_elements_plugin_version() {
+	static $version = null;
+
+	if ( null !== $version ) {
+		return $version;
+	}
+
+	if ( ! function_exists( 'get_file_data' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/plugin.php';
+	}
+
+	$plugin_data = get_file_data(
+		__FILE__,
+		array(
+			'Version' => 'Version',
+		),
+		'plugin'
+	);
+
+	$version = isset( $plugin_data['Version'] ) ? trim( $plugin_data['Version'] ) : '';
+
+	return $version;
+}
 
 /** 
  * Get options values for plugin
@@ -344,16 +370,18 @@ if( ! class_exists( 'UpdateChecker' ) ) {
 	class UpdateChecker{
 
 		public $plugin_slug;
+		public $plugin_file;
 		public $version;
 		public $cache_key;
 		public $cache_allowed;
 
 		public function __construct() {
 
-			$this->plugin_slug = plugin_basename( __DIR__ );
-			$this->version = NU_GLOBAL_ELEMENTS_PLUGIN_VER;
+			$this->plugin_file = plugin_basename( __FILE__ );
+			$this->plugin_slug = dirname( $this->plugin_file );
+			$this->version = nu_global_elements_plugin_version();
 			$this->cache_key = 'global_elements_updater';
-			$this->cache_allowed = false;
+			$this->cache_allowed = true;
 
 			add_filter( 'plugins_api', array( $this, 'info' ), 20, 3 );
 			add_filter( 'site_transient_update_plugins', array( $this, 'update' ) );
@@ -385,7 +413,7 @@ if( ! class_exists( 'UpdateChecker' ) ) {
 					return false;
 				}
 
-				set_transient( $this->cache_key, $remote, DAY_IN_SECONDS );
+				set_transient( $this->cache_key, $remote, 12 * HOUR_IN_SECONDS );
 
 			}
 
@@ -396,7 +424,7 @@ if( ! class_exists( 'UpdateChecker' ) ) {
 		}
 
 
-		function info( $res, $action, $args ) {
+		public function info( $res, $action, $args ) {
 
 			// do nothing if you're not getting plugin information right now
 			if( 'plugin_information' !== $action ) {
@@ -404,7 +432,7 @@ if( ! class_exists( 'UpdateChecker' ) ) {
 			}
 
 			// do nothing if it is not our plugin
-			if( $this->plugin_slug !== $args->slug ) {
+			if( empty( $args->slug ) || $this->plugin_slug !== $args->slug ) {
 				return $res;
 			}
 
@@ -448,31 +476,29 @@ if( ! class_exists( 'UpdateChecker' ) ) {
 
 		public function update( $transient ) {
 
-			if ( empty($transient->checked ) ) {
+			if ( empty( $transient->checked ) ) {
 				return $transient;
 			}
 
 			$remote = $this->request();
 
-			if(
+			if (
 				$remote
 				&& version_compare( $this->version, $remote->version, '<' )
 				&& version_compare( $remote->requires, get_bloginfo( 'version' ), '<=' )
-				&& version_compare( $remote->requires_php, PHP_VERSION, '<' )
+				&& version_compare( $remote->requires_php, PHP_VERSION, '<=' )
 			) {
 				$res = new stdClass();
 				$res->slug = $this->plugin_slug;
-				$res->plugin = plugin_basename( __FILE__ ); 
+				$res->plugin = $this->plugin_file;
 				$res->new_version = $remote->version;
 				$res->tested = $remote->tested;
 				$res->package = $remote->download_url;
 
 				$transient->response[ $res->plugin ] = $res;
-
-	    }
+			}
 
 			return $transient;
-
 		}
 
 		public function purge( $upgrader, $options ){
