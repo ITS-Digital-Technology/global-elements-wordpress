@@ -147,6 +147,7 @@ jobs:
             --exclude='.DS_Store' \
             --exclude='build' \
             --exclude='manifest' \
+            --exclude='development-release-notes.md' \
             --exclude='*.zip'
 
           cd build
