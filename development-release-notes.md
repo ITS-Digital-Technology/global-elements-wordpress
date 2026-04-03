@@ -1,6 +1,6 @@
 # Development / Release Notes
 
-This plugin’s release process is automated through GitHub Actions.
+This plugin’s release process is automated through GitHub Actions, specifically `.github/workflows/build-plugin-release.yml`, and is triggered by pushing a version tag such as `v1.5.1`.
 
 ## Release process
 
@@ -58,6 +58,6 @@ The release workflow updates the `gh-pages` branch automatically. It is treated 
 
 ## Notes
 
-- Do not commit release-only work directly to `main`.
+- Do not commit changes directly to `main`.
 - The packaged plugin zip intentionally excludes repo-only artifacts such as workflow files, manifest source files, and Pages-only files.
 - The workflow force-pushes `gh-pages` intentionally because it is treated as generated output.
