@@ -3,7 +3,7 @@
 Plugin Name: Northeastern Global Elements
 Plugin URI: https://github.com/ITS-Digital-Technology/global-elements-wordpress
 Description: Inserts the Northeastern University global header, footer, and TrustArc cookie consent manager. Requires wp_body_open() under the body tag to display the global header.
-Version: 1.5.0
+Version: 1.5.1
 Requires at least: 6.0
 Requires PHP: 7.4
 Author: Northeastern University ITS Web Solutions
