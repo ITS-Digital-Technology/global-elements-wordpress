@@ -1,13 +1,13 @@
 # Development / Release Notes
 
-This plugin’s release process is automated through GitHub Actions, specifically `.github/workflows/build-plugin-release.yml`, and is triggered by pushing a version tag such as `v1.5.1`.
+This plugin’s release process is automated through GitHub Actions, specifically `.github/workflows/build-plugin-release.yml`, and is triggered by pushing a new version tag such as `v1.5.1`.
 
 ## Release process
 
 1. Make changes on a feature branch
 2. Update the plugin header version in `nu_global_elements.php`
 3. Create a PR, then merge the feature branch into `main`
-4. Create and push a version tag such as:
+4. Create and push a new version tag on main such as:
 
    ```bash
    git tag -a v1.5.1 -m "Patch version 1.5.1"
