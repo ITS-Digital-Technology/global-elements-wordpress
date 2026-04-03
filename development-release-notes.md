@@ -4,10 +4,10 @@ This plugin’s release process is automated through GitHub Actions, specificall
 
 ## Release process
 
-1. Make changes on a feature branch
-2. Update the plugin header version in `nu_global_elements.php`
+1. Create a new feature branch off `main` and make changes.
+2. Update the plugin header version in `nu_global_elements.php`.
 3. Create a PR, then merge the feature branch into `main`
-4. Create and push a new version tag on main such as:
+4. Create and push a new version tag from `main`, such as:
 
    ```bash
    git tag -a v1.5.1 -m "Patch version 1.5.1"
@@ -17,11 +17,17 @@ This plugin’s release process is automated through GitHub Actions, specificall
 5. The release workflow will then:
    - verify that the tag points to a commit reachable from `main`
    - verify that the plugin header version matches the tag version
-   - build `global-elements-wordpress.zip` with a stable top-level plugin folder
+   - build `global-elements-wordpress.zip` with a stable top-level plugin folder name
    - create or update the GitHub release for that tag
    - upload the packaged plugin zip to the release
-   - generate the public updater manifest from `manifest/info.template.json`
+   - generate the public updater manifest from metadata in the header of `nu_global_elements.php`, using `manifest/info.template.json` as a template
    - publish the generated manifest to the `gh-pages` branch
+
+6. GitHub Pages then serves the updated manifest from the `gh-pages` branch at: 
+
+   ```text
+   https://its-digital-technology.github.io/global-elements-wordpress/manifest/info.json
+   ```
 
 ## Plugin metadata
 
@@ -34,17 +40,7 @@ The plugin header in `nu_global_elements.php` is the canonical source of truth f
 - minimum supported WordPress version
 - minimum supported PHP version
 
-Update the plugin header before tagging a release.
-
-## Manifest publishing
-
-The updater manifest is published at:
-
-```text
-https://its-digital-technology.github.io/global-elements-wordpress/manifest/info.json
-```
-
-It is generated during the release workflow from `manifest/info.template.json`.
+Update the plugin header BEFORE tagging a release.
 
 ## GitHub Pages configuration
 
