@@ -147,6 +147,7 @@ jobs:
             --exclude='.DS_Store' \
             --exclude='build' \
             --exclude='manifest' \
+            --exclude='development-release-notes.md' \
             --exclude='*.zip'
 
           cd build
@@ -169,6 +170,13 @@ jobs:
         shell: bash
         run: |
           gh release upload "$TAG_NAME" "$ZIP_NAME" --clobber
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release edit "$TAG_NAME" --draft=false
 
       - name: Generate manifest from template and plugin header
         shell: bash
