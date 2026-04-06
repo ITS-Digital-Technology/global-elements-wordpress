@@ -1,12 +1,12 @@
 # Development / Release Notes
 
-This plugin’s release process is automated through GitHub Actions, specifically `.github/workflows/build-plugin-release.yml`, and is triggered by pushing a new version tag such as `v1.5.1`.
+This plugin’s release process is automated through GitHub Actions, specifically `.github/workflows/build-plugin-release.yml`, and is triggered by pushing a new version tag, such as `v1.5.1`.
 
 ## Release process
 
 1. Create a new feature branch off `main` and make changes.
-2. Update the plugin header version in `nu_global_elements.php`.
-3. Create a PR, then merge the feature branch into `main`
+2. Be sure to update the `Version` in the header section of `nu_global_elements.php`.
+3. Create a PR to merge your feature branch into `main`, get approval, then merge it.
 4. Create and push a new version tag from `main`, such as:
 
    ```bash
@@ -16,7 +16,7 @@ This plugin’s release process is automated through GitHub Actions, specificall
 
 5. The release workflow will then:
    - verify that the tag points to a commit reachable from `main`
-   - verify that the plugin header version matches the tag version
+   - verify that the version in plugin file (`nu_global_elements.php`) header matches the tag version
    - build `global-elements-wordpress.zip` with a stable top-level plugin folder name
    - create or update the GitHub release for that tag
    - upload the packaged plugin zip to the release
