@@ -3,7 +3,7 @@
 Plugin Name: Northeastern Global Elements
 Plugin URI: https://github.com/ITS-Digital-Technology/global-elements-wordpress
 Description: Inserts the Northeastern University global header, footer, and TrustArc cookie consent manager. Requires wp_body_open() under the body tag to display the global header.
-Version: 1.5.1
+Version: 1.6.0
 Requires at least: 6.0
 Requires PHP: 7.4
 Author: Northeastern University ITS Web Solutions
@@ -14,6 +14,18 @@ Update URI: https://github.com/ITS-Digital-Technology/global-elements-wordpress
 if (!defined('ABSPATH')) { exit; }
 
 const NU_GLOBAL_ELEMENTS_PLUGIN_MANIFEST_URL = "https://its-digital-technology.github.io/global-elements-wordpress/manifest/info.json";
+
+/**
+ * Detect CampusPress hosting environment to determine the default NU Wordmark
+ * setting.
+ * 
+ * Returns true if the CAMPUSPRESS_SITE_ID constant is defined 
+ * in wp-config.php on CampusPress hosting. Defaults to false if not defined.
+ */
+
+function nu_is_campuspress_hosting() {
+    return defined('CAMPUSPRESS_SITE_ID');
+}
 
 function nu_global_elements_plugin_version() {
 	static $version = null;
@@ -45,7 +57,6 @@ function nu_global_elements_plugin_version() {
 
 $nu_global_elements_options = get_option( 'nu_global_elements_option_name' );
 
-
 /** 
  * Include global elements CSS, kernl UI and javascript from CDN on front end
  */
@@ -68,8 +79,22 @@ if (!isset($nu_global_elements_options['disable_global_header'])) {
 
     add_action('wp_body_open', function() use ($nu_global_elements_options) {
 
-        // Determine whether to show the wordmark
-        $show_wordmark = isset($nu_global_elements_options['show_nu_wordmark']) && $nu_global_elements_options['show_nu_wordmark'];
+		/**
+		 * Determine whether to show the Wordmark. This key value can be:
+		 * 1) Non-existent
+		 * 2) 0 (saved as unchecked)
+		 * 3) "show_nu_wordmark" (ON)
+		 */ 
+
+        if ( isset( $nu_global_elements_options['show_nu_wordmark'] ) ) {
+            
+			// Use the explicitly saved admin checkbox setting.
+            $show_wordmark = $nu_global_elements_options['show_nu_wordmark'] === 'show_nu_wordmark';
+
+        } else {
+            // Defaults to true for CampusPress hosting, false otherwise.
+            $show_wordmark = nu_is_campuspress_hosting();
+        }
 
         // Determine whether to show the menu
         $disable_menu = isset($nu_global_elements_options['disable_menu']) && $nu_global_elements_options['disable_menu'];
@@ -268,9 +293,22 @@ class NUGlobalElements {
 			$sanitary_values['disable_trustarc'] = $input['disable_trustarc'];
 		}
 
+		/**
+		 * Distinguish between:
+		 * 1) a new CampusPress site with the Wordmark OFF by default, and 
+		 * 2) the user explicitly unchecking to OFF the Wordmark option for 
+		 * a site that previously had it ON by default.
+		 * 
+		 * The "show_nu_wordmark" value is saved as "show_nu_wordmark" when 
+		 * the checkbox is checked, and "0" when unchecked. If the value is
+		 * not set at all, the front-end will check if the site is hosted on
+		 * CampusPress to determine the default Wordmark setting.
+		 */ 
 		if ( isset( $input['show_nu_wordmark'] ) ) {
-			$sanitary_values['show_nu_wordmark'] = $input['show_nu_wordmark'];
-		}
+            $sanitary_values['show_nu_wordmark'] = 'show_nu_wordmark';
+        } else {
+            $sanitary_values['show_nu_wordmark'] = '0';
+        }
 
 		if ( isset( $input['skip_link_selector'] ) ) {
 			$sanitary_values['skip_link_selector'] = $input['skip_link_selector'];
@@ -295,9 +333,23 @@ class NUGlobalElements {
 	}
 
 	public function show_nu_wordmark_callback() {
+
+		/**
+		 * Check if the NU Workmark checkmark was saved as ON. 
+		 */
+		if ( isset( $this->nu_global_elements_options['show_nu_wordmark'] ) ) {
+            $is_checked = $this->nu_global_elements_options['show_nu_wordmark'] === 'show_nu_wordmark';
+        } else {
+            /**
+			 * If the Wordmark option has never been saved, check if this site is 
+			 * hosted on CampusPress. CampusPress sites default the Wordmark to ON, 
+			 * non-CampusPress sites to OFF.
+			 */
+            $is_checked = nu_is_campuspress_hosting();
+        }
 		printf(
 			'<input type="checkbox" name="nu_global_elements_option_name[show_nu_wordmark]" id="show_nu_wordmark" value="show_nu_wordmark" %s>',
-			( isset( $this->nu_global_elements_options['show_nu_wordmark'] ) && $this->nu_global_elements_options['show_nu_wordmark'] === 'show_nu_wordmark' ) ? 'checked' : ''
+			( $is_checked ? 'checked' : '' )
 		);
 	}
 
@@ -516,6 +568,13 @@ if( ! class_exists( 'UpdateChecker' ) ) {
 
 	}
 
-	new UpdateChecker();
+	/**
+	 * If we are in a CampusPress environment, skip the UpdateChecker. CampusPress
+	 * manages its plugin updates through a bitbucket repo and this plugin uses a
+	 * pre-defined directory name specific to CampusPress, "nu-global-elements".
+	 */
+	if ( ! nu_is_campuspress_hosting() ) {
+		new UpdateChecker();
+	}	
 
 }

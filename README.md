@@ -26,6 +26,9 @@ The global elements package includes a few elements that should be included on a
 4. If you need to stop this plugin from displaying the global header, footer, or TrustArc elements, you can do so from the settings page for this plugin in WP Admin.
 5. If you need more detailed instructions, see this [KB article](https://service.northeastern.edu/tech?id=kb_article_view&sysparm_article=KB000022192).
 
+## CampusPress Installation
+For sites created on CampusPress hosting through Sites at Northeastern (https://sites.northeastern.edu), this plugin has been included and activated in all current templates by default.
+
 ### TrustArc Visibility
 
 Some themes may have a height style on iframes. This can be tested by opening the Cookie Preferences link found as the last item in the footer (front end), where the TrustArc modal may be partly obscured when open. If so, you can override with the following style:
